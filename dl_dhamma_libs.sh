@@ -1,7 +1,7 @@
 launch_or_switchto_chrome() {
 	if wmctrl -lx | grep -q "google-chrome"; then
 		wmctrl -xa "google-chrome"
-		sleep 2
+		sleep 0.3
 	else 
 		#google-chrome
 		
@@ -10,7 +10,7 @@ launch_or_switchto_chrome() {
 		
 		# Wait for a window with "Google Chrome" in the title appear
 		until wmctrl -l | grep "Google Chrome" > /dev/null; do
-			sleep 0.1
+			sleep 0.3
 		done
 		
 		echo "Google Chrome window is available."
@@ -38,6 +38,23 @@ wait_for_save_dialog() {
 	exit 1
 }
 
+## Work only in Google Chrome
+wait_for_page_loaded() {
+	if [ -z "$1" ]; then
+		echo "Error: No URL parameter provided"
+		return 1
+	fi
+	
+	URL="$1"
+	FILENAME=$(echo $URL | sed -E "s/.*\/([a-zA-Z0-9_\-]+\.mp3)/\1/")
+	echo "wait_for_page_loaded(): FILENAME=$FILENAME"
+	
+	while wmctrl -l | grep "$FILENAME - Google Chrome" > /dev/null; do
+		sleep 0.5
+	done
+	sleep 2
+}
+
 download_audio() {
 	if [ -z "$1" ]; then
 		echo "Error: No URL parameter provided"
@@ -55,7 +72,8 @@ download_audio() {
 	xdotool type "$URL"
 	sleep 0.3
 	xdotool key Return 
-	sleep 10 # Wait for the page to completely load
+	#sleep 10 # Wait for the page to completely load
+	wait_for_page_loaded $URL
 	
 	xdotool key ctrl+s	# Open the Download dialog
 	wait_for_save_dialog
@@ -88,7 +106,7 @@ wait_until_exists() {
 		echo "SUCCESS! File $FILE found after $ELAPSED seconds"
 	else
 		echo "FAILED! File $FILE not found after waiting" >$2
-		exit 1
+		exit
 	fi
 }
 
