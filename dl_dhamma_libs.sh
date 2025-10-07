@@ -21,7 +21,7 @@ launch_or_switchto_chrome() {
 wait_for_save_dialog() {
 	WIN_TITLE="Save File"
 	START_SEC=1
-	TIMEOUT_SEC=600
+	TIMEOUT_SEC=60
 	SLEEP_INTERVAL=2
 	
 	until (( START_SEC >= TIMEOUT_SEC )); do
@@ -47,12 +47,22 @@ wait_for_page_loaded() {
 	
 	URL="$1"
 	FILENAME=$(echo $URL | sed -E "s/.*\/([a-zA-Z0-9_\-]+\.mp3)/\1/")
-	echo "wait_for_page_loaded(): FILENAME=$FILENAME"
 	
-	while wmctrl -l | grep "$FILENAME - Google Chrome" > /dev/null; do
+	ELAPSED_SEC=1
+	TIMEOUT_SEC=30
+	
+	while ! wmctrl -l | grep "$FILENAME - Google Chrome" > /dev/null; do
+		echo "wait_for_page_loaded(): Chrome's title containing '$FILENAME' not found yet. Waiting..."
 		sleep 0.5
+		
+		ELAPSED_SEC=$((ELAPSED_SEC+1))
+		
+		if (( ELAPSED_SEC >= TIMEOUT_SEC )); then
+			echo "wait_for_page_loaded(): Error waiting for Chrome's title containing '$FILENAME'."
+			exit 1
+		fi
 	done
-	sleep 2
+	sleep 1
 }
 
 download_audio() {
